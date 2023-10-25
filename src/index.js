@@ -4,6 +4,9 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+window.socketWorker = new Worker(new URL("./context/socket-worker/worker.ts", import.meta.url), { type: "module" });
+window.gridRowSize = window.location.host.includes("localhost") ? 1000 : 10000;
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

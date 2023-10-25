@@ -1,24 +1,35 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import SignIn from "./pages/SignIn/SignIn";
+import LightTheme from "./layouts/light-theme/LightTheme";
+import UserProvider from "./context/user.provider";
+import IndexDBProvider from "./context/indexeddb.provider";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import ModalProvider from "./context/modal.provider";
+import SetUp from "./pages/Setup/SetUp";
+import ServiceWorkerProvider from "./context/serviceworker.provider";
+import WorkerProvider from "./context/socket-worker/worker.context";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <ServiceWorkerProvider>
+        <IndexDBProvider>
+          <UserProvider>
+            <WorkerProvider>
+              <ModalProvider>
+                <Routes>
+                  <Route path="" element={<LightTheme />}>
+                    <Route path="/" index element={<SignIn />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/setup" element={<SetUp />} />
+                  </Route>
+                </Routes>
+              </ModalProvider>
+            </WorkerProvider>
+          </UserProvider>
+        </IndexDBProvider>
+      </ServiceWorkerProvider>
+    </BrowserRouter>
   );
 }
 
