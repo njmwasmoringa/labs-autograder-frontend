@@ -1,5 +1,5 @@
 {
     "canvas":"https://moringa.instructure.com/api/v1",
-    "grader":"http://172.232.157.242:3130",
+    "grader":"https://autograderapi.picpazz.com",
     "livegrader":"http://localhost:3130"
 }
