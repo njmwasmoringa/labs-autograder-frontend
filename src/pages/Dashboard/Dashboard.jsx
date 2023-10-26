@@ -7,8 +7,9 @@ import Submissions from "./Submissions";
 import { ServiceWorkerContext } from "../../context/serviceworker.provider";
 import { ModalContext } from "../../context/modal.provider";
 import { WorkerContext } from "../../context/socket-worker/worker.context";
-import { Modal } from "react-bootstrap";
+import { Dropdown, Modal } from "react-bootstrap";
 import ManualGrade from "../../components/ManualGrade";
+import StudentsProgress from "../../components/StudentsProgress";
 
 export default function Dashboard() {
 
@@ -206,46 +207,20 @@ export default function Dashboard() {
             }).then(remoteAssignments => {
                 console.log(remoteAssignments);
                 btn.innerHTML = "Auto Grade";
-                const allAssignements = remoteAssignments.map(assignment => {
-                    return {
-                        ...assignment,
-                        selected: selectedAssignments.find(a => assignment.id === a.id) != null
+                const allAssignements = remoteAssignments.reduce((a, assignment) => {
+                    if (assignment.published) {
+                        a.push({
+                            ...assignment,
+                            selected: selectedAssignments.find(a => assignment.id === a.id) != null
+                        });
                     }
-                });
+                    return a;
+                }, []);
                 setAssignments(allAssignements);
                 setSelectAssignment(true);
             })
                 .catch(e => console.log(e))
         });
-
-
-        /* const updatedCOurse = { ...course, autograde: true }
-        setCourse(updatedCOurse);
-        Idb.saveData("courses", updatedCOurse).then(() => {
-            Idb.getAll("courses").then(allCourses => {
-                setCourses(allCourses);
-            });
-        });
-
-        api.post("/grade", JSON.stringify({
-            course: course.id,
-            user: user.id
-        }), { Authorization: `Bearer ${user.token}` })
-            .then(gradeREsponse => {
-                console.log(gradeREsponse);
-                worker.postMessage({
-                    action: "send",
-                    as: "grade",
-                    payload: {
-                        usercourse: `${user.id}-${course.id}`,
-                        payload: {
-                            course: course.id,
-                            user: user.id
-                        }
-                    }
-                });
-            })
-            .catch(console.log) */
 
     }
 
@@ -277,43 +252,62 @@ export default function Dashboard() {
             </Modal.Footer>
         </Modal>
 
-        <div className="d-flex">
-            {courses && <div className="list-group list-group-flush flex-fill">
-                <div className="list-group-item">
-                    <h4>Courses</h4>
-                    <p>Select the courses you want to grade</p>
-                </div>
-                {courses.map(c => <a href="#" key={c.id}
-                    className={`list-group-item ${course && course.id === c.id ? "active" : ""} list-group-item-action`}
-                    onClick={() => setCourse(c)}>{c.name}</a>)}
-            </div>}
-
-            <div ref={responsesDiv} className="ps-3 border-start border-primary w-75">
-                {course && <>
-                    {/* <ul className="nav nav-tabs">
-                        <li className="nav-item">
-                            <a className="nav-link" href=""></a>
-                        </li>
-                    </ul> */}
-                <Submissions {...{ course }}>
-                    <div className="d-flex align-items-center">
-                        <div className="me-2">
-                            <button type="button"
-                                onClick={handleAutoGrade}
-                                className="btn btn-primary"
-                                disabled={course.autograde === true}
-                            >Auto Grade</button>
-                        </div>
-                        <div>
-                            <button className="btn btn-light" onClick={()=>{
-                                setModalData({
-                                    title:"Manual Grade",
-                                    body: <ManualGrade {...{course}} />
-                                });
-                            }}>Manual Grade</button>
-                        </div>
+        <div className="d-md-flex flex-md-row">
+            {courses && <>
+                <div className="list-group list-group-flush d-none d-md-inline w-25">
+                    <div className="list-group-item">
+                        <h4>Courses</h4>
+                        <p>Select the courses you want to grade</p>
                     </div>
-                </Submissions></>}
+                    {courses.map(c => <a href="#" key={c.id}
+                        className={`list-group-item ${course && course.id === c.id ? "active" : ""} list-group-item-action`}
+                        onClick={() => setCourse(c)}>{c.name}</a>)}
+                </div>
+                <div className=" mb-3 d-md-none">
+                    <Dropdown>
+                        <Dropdown.Toggle variant="outline-primary" id="dropdown-basic">
+                            {course ? course.name : "Select Course"}
+                        </Dropdown.Toggle>
+
+                        <Dropdown.Menu>
+                            {courses.map(c => <Dropdown.Item key={c.id}
+                                onClick={() => setCourse(c)}>{c.name}</Dropdown.Item>)}
+                        </Dropdown.Menu>
+                    </Dropdown>
+                </div>
+            </>}
+
+            <div ref={responsesDiv} className="ps-3 border-start border-primary flex-fill">
+
+                {course && <>
+                    <Submissions {...{ course }}>
+                        <div className="d-flex align-items-center">
+                            <div className="me-2">
+                                <button type="button"
+                                    onClick={handleAutoGrade}
+                                    className="btn btn-primary"
+                                    disabled={course.autograde === true}
+                                >Auto Grade</button>
+                            </div>
+                            <div className="me-2">
+                                <button className="btn btn-light" onClick={() => {
+                                    setModalData({
+                                        title: "Manual Grade",
+                                        body: <ManualGrade {...{ course }} onGradeStart={() => setModalData(undefined)} />
+                                    });
+                                }}>Manual Grade</button>
+                            </div>
+                            <div>
+                                <button className="btn btn-light" onClick={() => {
+                                    setModalData({
+                                        fullScreen: true,
+                                        title: "Progress Tracker",
+                                        body: <StudentsProgress {...{ course }} onGradeStart={() => setModalData(undefined)} />
+                                    });
+                                }}>Student Progress</button>
+                            </div>
+                        </div>
+                    </Submissions></>}
             </div>
         </div>
     </section >)

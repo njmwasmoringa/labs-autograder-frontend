@@ -10,7 +10,7 @@ export default function ModalProvider({ children }) {
         {modalData && <Modal show={true} centered onHide={()=>{
             if(modalData.onHide) modalData.onHide();
             else setModalData(undefined);
-        }}>
+        }} fullscreen={modalData.fullScreen === true ? true : "md-down"}>
             {modalData.title && <Modal.Header closeButton>
                 <Modal.Title>{modalData.title}</Modal.Title>
             </Modal.Header>}

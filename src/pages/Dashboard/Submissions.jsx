@@ -82,23 +82,23 @@ export default function Submissions({ children, course }) {
                             }
 
                             const responsesDiv = document.querySelector(`#card${submissions[iOfs].id}`);
-                        if (responsesDiv) {
-                            responsesDiv.scrollTop = responsesDiv.scrollHeight;
-                        }
+                            if (responsesDiv) {
+                                responsesDiv.scrollTop = responsesDiv.scrollHeight;
+                            }
                         }
                     }
 
                     if ("submissions" in workerMessage) {
                         console.log(workerMessage.submissions);
-                        setSubmissions(workerMessage.submissions.filter(s=>s.assignment.course_id === selectedCourse.id));
+                        setSubmissions(workerMessage.submissions.filter(s => s.assignment.course_id === selectedCourse.id));
                     }
-                break;
+                    break;
 
             }
         }
     }, [workerMessage]);
 
-    return (<div>
+    return (<div className="h-100">
         <h4>Course: {course.name}</h4>
         <p>This course submissions and grading progress</p>
         {children}
@@ -108,18 +108,21 @@ export default function Submissions({ children, course }) {
             overflowY: "auto"
         }}>
 
-            {submissions && <Accordion defaultActiveKey={0}>
+            {submissions && submissions.length > 0 ? <Accordion defaultActiveKey={0}>
                 {submissions.map((subm, i) => <Accordion.Item eventKey={i} key={subm.id}>
-                <Accordion.Header>
-                    {subm.assignment.name} For {subm.user.name} :- {subm.prevMsg}
-                </Accordion.Header>
-                <Accordion.Body>
-                    {subm.responses && subm.responses.map((response, i) => <div key={`${subm.id}-${i}`} id={`card${subm.id}`}>
-                        {response}
-                    </div>)}
-                </Accordion.Body>
-            </Accordion.Item>)}
-            </Accordion>}
+                    <Accordion.Header>
+                        {subm.assignment.name} For {subm.user.name} :- {subm.prevMsg}
+                    </Accordion.Header>
+                    <Accordion.Body>
+                        {subm.responses && subm.responses.map((response, i) => <div key={`${subm.id}-${i}`} id={`card${subm.id}`}>
+                            {response}
+                        </div>)}
+                    </Accordion.Body>
+                </Accordion.Item>)}
+            </Accordion> : <div className="p-5 text-center">
+                <h4>Nothing much happening in</h4>
+                <h6>{course.name}</h6>
+            </div>}
         </div>
     </div>);
 }

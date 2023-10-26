@@ -5,12 +5,13 @@ import { UserContext } from "../context/user.provider";
 import { WorkerContext } from "../context/socket-worker/worker.context";
 import { ModalContext } from "../context/modal.provider";
 
-export default function ManualGrade({ course }) {
+export default function ManualGrade({ course, onGradeStart }) {
 
     const [assignments, setAssignments] = useState([]);
     const [submissions, setSubmissions] = useState();
     const [selectedSubmissions, setSelectedSubmissions] = useState([]);
     const [inProgress, setInProgress] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         assignment: null,
         workflow: "submitted"
@@ -55,6 +56,7 @@ export default function ManualGrade({ course }) {
             }
         });
         if(m) m.setModalData(undefined);
+        if(onGradeStart) onGradeStart();
     }
 
     function handleFields(evt) {
@@ -65,6 +67,8 @@ export default function ManualGrade({ course }) {
     function getSubmission() {
 
         if (!formData.assignment) return;
+        setLoading(true);
+        setSubmissions([]);
 
         api.get(`/submissions/${course.id}?assignments=${formData.assignment}&workflow=${formData.workflow}`, {
             Authorization: `Bearer ${user.token}`
@@ -74,6 +78,7 @@ export default function ManualGrade({ course }) {
                 setSubmissions(data);
             })
             .catch(e => console.log(e))
+            .finally(()=>setLoading(false))
     }
 
     function handleSubmissionSelection(evt) {
@@ -122,6 +127,8 @@ export default function ManualGrade({ course }) {
                 <label className="btn btn-outline-primary" htmlFor="graded">Graded</label>
             </div>
         </div>
+        {loading && <p align="center">Loading...</p>}
+        {selectedSubmissions.length > 0 && <div className="pb-2 pt-2">{selectedSubmissions.length} Selected</div>}
         {submissions && <div style={{ maxHeight: "300px", overflow: "hidden", overflowY: "auto" }}>
             <strong>Select Submissions to grade</strong>
             <ul className="list-group list-group-flush">
@@ -133,6 +140,7 @@ export default function ManualGrade({ course }) {
                     <label className="form-check-label" htmlFor={`sub${subm.id}`}>
                         <h6>{subm.user.name}</h6>
                         <div><span>Grade: {subm.grade}</span></div>
+                        {subm.submission_comments.map((comment, i)=><p key={comment.id}>{comment.comment}</p>)}
                     </label>
                 </li>)}
             </ul>
