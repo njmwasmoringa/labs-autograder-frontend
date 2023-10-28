@@ -1,6 +1,6 @@
 importScripts(["/assets/idb.js"]);
 
-const graderAPIBase = "https://autograderapi.picpazz.com"; //"http://localhost:3130";
+const graderAPIBase = "https://autograderapi.picpazz.com"; //"http://localhost:3130"; // 
 
 const IndexedDb = new IDB("AutoGrader", 8);
 async function getSubmissions() {
