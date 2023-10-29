@@ -11,7 +11,10 @@ export default function StudentsProgress({ course, onGradeStart }) {
     const chart = useRef();
     const [options, setOptions] = useState({
         chart:{
-            height:"80dvh"
+            height:"300%"
+        },
+        title:{
+            text: "Content Coverage Progress"
         },
         series: [{
             type: "bar",
