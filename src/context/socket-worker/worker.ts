@@ -7,6 +7,7 @@ import servers from "../../configs.json";
 const actions = {
     socket: null,
     auth: null,
+    status: 'idle',
     connect(auth, port) {
         this.auth = auth;
         console.log(`${servers.grader}`.replace('http', 'ws'));
@@ -17,7 +18,7 @@ const actions = {
 
             this.socket.on("connect", () => {
                 console.log("Connected", this.socket.id);
-                // self.postMessage({as:"connect", socketId:this.socket.id});
+                self.postMessage({as:"connect", socketId:this.socket.id});
             });
 
             this.socket.on("connect_error", err => {
@@ -27,6 +28,7 @@ const actions = {
 
             this.socket.on("serviceState", (status) => {
                 // console.log(status);
+                this.status = status;
                 self.postMessage({ as: "serviceState", ...status });
             });
 
@@ -42,6 +44,8 @@ const actions = {
         }
     },
 
+    
+
     disconnect() {
         if (this.socket) this.socket.disconnect();
     },
@@ -52,6 +56,9 @@ const actions = {
             this.socket.emit(...Object.values(message), (response) => {
                 self.postMessage(response);
             })
+        }
+        else{
+            console.log("What a heck")
         }
         self.postMessage("test");
     }

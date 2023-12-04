@@ -42,6 +42,8 @@ export default function ManualGrade({ course, onGradeStart }) {
             return selectedUsers;
         }, []);
 
+        console.log(worker);
+
         worker.postMessage({
             action: "send",
             as: "grade",

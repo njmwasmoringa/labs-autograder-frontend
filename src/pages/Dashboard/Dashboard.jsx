@@ -14,12 +14,13 @@ import StudentsProgress from "../../components/StudentsProgress";
 export default function Dashboard() {
 
     const Idb = useContext(IndexedDbContext);
-    const [user] = useContext(UserContext);
+    const [user, setUser] = useContext(UserContext);
     const [modalData, setModalData] = useContext(ModalContext);
     const swReg = useContext(ServiceWorkerContext);
     const [courses, setCourses] = useState();
     const [course, setCourse] = useState();
     const [submissions, setSubmissions] = useState([]);
+    const [serviceStatus, setServiceStatus] = useState("");
     const [assignments, setAssignments] = useState();
     const [selectAssignment, setSelectAssignment] = useState();
     const [assignments2Grade, setAssignments2Grade] = useState([]);
@@ -47,11 +48,7 @@ export default function Dashboard() {
             Idb.getAll("courses").then(allCourses => {
                 if (allCourses.length === 0) {
                     // navigate("/setup");
-                    api.get("/courses", { Authorization: `Bearer ${user.token}` })
-                        .then(canvasCourses => {
-                            setCourses(canvasCourses);
-                            Idb.saveManyData("courses", canvasCourses);
-                        })
+                    syncCourses();
                 }
                 else {
                     setCourses(allCourses);
@@ -75,7 +72,6 @@ export default function Dashboard() {
                             }), { Authorization: `Bearer ${user.token}` }) */
                         }
                     });
-
                 }
             });
         }
@@ -84,6 +80,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         if (workerMessage) {
+            console.log(workerMessage);
             switch (workerMessage.as) {
                 case "grade":
                     if ("submissions" in workerMessage) {
@@ -121,6 +118,33 @@ export default function Dashboard() {
                         }
                     } */
                     break;
+
+                case "connect":
+                    if(!serviceStatus || serviceStatus === ""){
+                        api.post(`/users/auth`, JSON.stringify({ authtoken: user.token }));
+                    }
+                break;
+
+                case "serviceState":
+                    setServiceStatus(workerMessage.status);
+                    if (assignments2Grade.length > 0) {
+                        worker.postMessage({
+                            action: "send",
+                            as: "grade",
+                            payload: {
+                                usercourse: `${user.id}-any`,
+                                payload: {
+                                    action: "run",
+                                    course: course.id,
+                                    user: user.id,
+                                    assignments: [...assignments2Grade.map(a => a.id)]
+                                }
+                            }
+                        });
+
+                        setAssignments2Grade([]);
+                    }
+                    break;
             }
         }
     }, [workerMessage]);
@@ -144,55 +168,63 @@ export default function Dashboard() {
         }
     }
 
-    function handleSelectionClose() {
+    async function handleSelectionClose() {
         console.log(assignments2Grade);
-        Idb.saveManyData("assignments", assignments2Grade).then(() => {
-            setSelectAssignment(undefined);
-            const updatedCOurse = { ...course, autograde: true }
-            setCourse(updatedCOurse);
-            Idb.saveData("courses", updatedCOurse).then(() => {
-                Idb.getAll("courses").then(allCourses => {
-                    setCourses(allCourses);
-                    /* api.post("/grade", JSON.stringify({
-                        course: course.id,
-                        user: user.id,
-                        assignments: assignments2Grade.map(a=>a.id)
-                    }), { Authorization: `Bearer ${user.token}` })
-                        .then(gradeREsponse => {
-                            console.log(gradeREsponse);
-                            worker.postMessage({
-                                action: "send",
-                                as: "grade",
-                                payload: {
-                                    usercourse: `${user.id}-${course.id}`,
-                                    payload: {
-                                        action: "run",
-                                        course: course.id,
-                                        user: user.id,
-                                        assignments: assignments2Grade.map(a=>a.id)
-                                    }
-                                }
-                            });
-                        })
-                        .catch(console.log) */
-                });
-            });
-            worker.postMessage({
-                action: "send",
-                as: "grade",
-                payload: {
-                    usercourse: `${user.id}-any`,
-                    payload: {
-                        action: "run",
-                        course: course.id,
-                        user: user.id,
-                        assignments: assignments2Grade.map(a => a.id)
+
+        await Idb.saveManyData("assignments", assignments2Grade);
+
+        setSelectAssignment(undefined);
+        const updatedCOurse = { ...course, autograde: true }
+        setCourse(updatedCOurse);
+
+        await Idb.saveData("courses", updatedCOurse);
+        const allCourses = await Idb.getAll("courses");
+        setCourses(allCourses);
+
+        console.log("status", serviceStatus);
+        if (!serviceStatus || serviceStatus === "") {
+            console.log(user);
+            try {
+                await api.post(`/users/auth`, JSON.stringify({ authtoken: user.token }));
+            }
+            catch (e) {
+                console.log(e);
+                return;
+            }
+
+            return;
+
+            /* const getStatus = ()=>serviceStatus;
+
+            await new Promise((rs)=>{ 
+                let interval = setInterval(()=>{
+                    console.log(getStatus());
+                    if(getStatus() && getStatus() !== ""){
+                        clearInterval(interval);
+                        interval = undefined;
+                        rs("done");
                     }
-                }
+                }, 1000);
             });
+            console.log(worker); */
+        }
+
+        worker.postMessage({
+            action: "send",
+            as: "grade",
+            payload: {
+                usercourse: `${user.id}-any`,
+                payload: {
+                    action: "run",
+                    course: course.id,
+                    user: user.id,
+                    assignments: [...assignments2Grade.map(a => a.id)]
+                }
+            }
         });
-        /* const assignementIds = assignments2Grade.map(a=>a.id);
-        api. */
+
+        setAssignments2Grade([]);
+
     }
 
     function handleAutoGrade(evt) {
@@ -202,10 +234,12 @@ export default function Dashboard() {
         btn.innerHTML = "Getting assignments...";
 
         Idb.getAll("assignments").then(selectedAssignments => {
+            setAssignments2Grade(selectedAssignments);
             api.get(`/assignments/${course.id}?page=1&per_page=1000`, {
                 Authorization: `Bearer ${user.token}`
             }).then(remoteAssignments => {
                 console.log(remoteAssignments);
+                btn.disabled = false;
                 btn.innerHTML = "Auto Grade";
                 const allAssignements = remoteAssignments.reduce((a, assignment) => {
                     if (assignment.published) {
@@ -222,6 +256,14 @@ export default function Dashboard() {
                 .catch(e => console.log(e))
         });
 
+    }
+
+    function syncCourses() {
+        api.get("/courses", { Authorization: `Bearer ${user.token}` })
+            .then(canvasCourses => {
+                setCourses(canvasCourses);
+                Idb.saveManyData("courses", canvasCourses);
+            })
     }
 
     return (<section className="mb-auto">
@@ -256,7 +298,10 @@ export default function Dashboard() {
             {courses && <>
                 <div className="list-group list-group-flush d-none d-md-inline w-25">
                     <div className="list-group-item">
-                        <h4>Courses</h4>
+                        <div className="d-flex justify-content-between">
+                            <h4>Courses</h4>
+                            <button type="button" className="btn" onClick={syncCourses}>Sync Courses</button>
+                        </div>
                         <p>Select the courses you want to grade</p>
                     </div>
                     {courses.map(c => <a href="#" key={c.id}
@@ -264,16 +309,20 @@ export default function Dashboard() {
                         onClick={() => setCourse(c)}>{c.name}</a>)}
                 </div>
                 <div className=" mb-3 d-md-none">
-                    <Dropdown>
-                        <Dropdown.Toggle variant="outline-primary" id="dropdown-basic">
-                            {course ? course.name : "Select Course"}
-                        </Dropdown.Toggle>
+                    <div className="d-flex justify-content-between">
+                        <Dropdown>
+                            <Dropdown.Toggle variant="outline-primary" id="dropdown-basic">
+                                {course ? course.name : "Select Course"}
+                            </Dropdown.Toggle>
 
-                        <Dropdown.Menu>
-                            {courses.map(c => <Dropdown.Item key={c.id}
-                                onClick={() => setCourse(c)}>{c.name}</Dropdown.Item>)}
-                        </Dropdown.Menu>
-                    </Dropdown>
+                            <Dropdown.Menu>
+                                {courses.map(c => <Dropdown.Item key={c.id}
+                                    onClick={() => setCourse(c)}>{c.name}</Dropdown.Item>)}
+                            </Dropdown.Menu>
+                        </Dropdown>
+
+                        <button type="button" className="btn" onClick={syncCourses}>Sync Courses</button>
+                    </div>
                 </div>
             </>}
 
@@ -286,8 +335,7 @@ export default function Dashboard() {
                                 <button type="button"
                                     onClick={handleAutoGrade}
                                     className="btn btn-primary"
-                                    disabled={course.autograde === true}
-                                >Auto Grade</button>
+                                >{!course.autograde ? 'Auto Grade' : 'Edit Assignments'}</button>
                             </div>
                             <div className="me-2">
                                 <button className="btn btn-light" onClick={() => {
