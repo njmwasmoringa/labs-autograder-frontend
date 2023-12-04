@@ -20,7 +20,7 @@ export default function LightTheme() {
 
     return (<>
         <header className="container d-flex justify-content-between align-items-center">
-            <h1>Auto Grader</h1> 
+            <h1>Auto Grader<br/><small style={{fonstSize:"10px"}}>v1.0</small></h1> 
             <span>Status: {serviceStatus}</span>
         </header>
 
