@@ -56,7 +56,12 @@ export default function Submissions({ children, course }) {
                         else {
                             const prevMsg = submissions[iOfs].prevMsg;
                             let responseText = workerMessage.responseText
-                            if ((!prevMsg || !prevMsg.includes("**-----js_test_report-------**") && responseText != "End")) {
+                            if (
+                                (!prevMsg || 
+                                    !prevMsg.includes("**-----js_test_report-------**") || 
+                                    !prevMsg.includes("**-----react_test_report-------**")) 
+                                && responseText != "End") {
+
                                 setSubmissions(prev => {
                                     const ps = [...prev];
                                     ps.splice(iOfs, 1, {

@@ -9,10 +9,10 @@ export default function LightTheme() {
 
     const [serviceStatus, setServiceStatus] = useState("");
     const [user] = useContext(UserContext);
-    const {workerMessage} = useContext(WorkerContext);
+    const { workerMessage } = useContext(WorkerContext);
 
-    useEffect(()=>{
-        if(workerMessage && workerMessage.as === "serviceState"){
+    useEffect(() => {
+        if (workerMessage && workerMessage.as === "serviceState") {
             // console.log(workerMessage);
             setServiceStatus(workerMessage.status);
         }
@@ -20,7 +20,10 @@ export default function LightTheme() {
 
     return (<>
         <header className="container d-flex justify-content-between align-items-center">
-            <h1>Auto Grader<br/><small style={{fonstSize:"10px"}}>v1.0</small></h1> 
+            <div>
+                <h1>Auto Grader</h1>
+                <small>v1.0</small>
+            </div>
             <span>Status: {serviceStatus}</span>
         </header>
 
