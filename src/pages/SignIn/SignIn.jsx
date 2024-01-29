@@ -39,6 +39,11 @@ export default function SignIn() {
 
         <h2>Sign In</h2>
 
+        <p>
+            Login to the canvas and generate an authorization token <br/>
+            under the profile settings and paste it below
+        </p>
+
         <div className="form-group mb-3">
             <label>Enter your canvas authorization token</label>
             <input type="password" name="authToken" className="form-control" />

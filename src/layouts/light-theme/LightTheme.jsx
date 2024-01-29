@@ -24,7 +24,10 @@ export default function LightTheme() {
                 <h1>Auto Grader</h1>
                 <small>v1.0</small>
             </div>
-            <span>Status: {serviceStatus}</span>
+            <div className="d-flex align-items-center">
+                <span>Auto Grading Status:</span>
+                <h4><span className={`badge bg-${serviceStatus === 'idle' ? 'light text-dark' : 'success'}`}>{serviceStatus}</span></h4>
+            </div>
         </header>
 
         <main className="d-flex justify-content-streach">

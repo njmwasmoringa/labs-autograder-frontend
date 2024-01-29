@@ -328,7 +328,7 @@ export default function Dashboard() {
 
             <div ref={responsesDiv} className="ps-3 border-start border-primary flex-fill">
 
-                {course && <>
+                {course ? <>
                     <Submissions {...{ course }}>
                         <div className="d-flex align-items-center">
                             <div className="me-2">
@@ -355,7 +355,10 @@ export default function Dashboard() {
                                 }}>Student Progress</button>
                             </div>
                         </div>
-                    </Submissions></>}
+                    </Submissions></> 
+                    : <div className="d-flex flex-column justify-content-center h-100 align-items-center">
+                        <h3>Select a course or add one</h3>
+                        </div>}
             </div>
         </div>
     </section >)
