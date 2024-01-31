@@ -1,6 +1,6 @@
 importScripts(["/assets/idb.js"]);
 
-const graderAPIBase = "https://autograderapi.picpazz.com"; //"http://localhost:3130"; // 
+const graderAPIBase = "http://localhost:3130"; //"https://autograderapi.picpazz.com"; // 
 
 const IndexedDb = new IDB("AutoGrader", 8);
 async function getSubmissions() {
@@ -48,7 +48,7 @@ self.addEventListener('activate', function (e) {
       }).then(status => {
         if (status.state === 'granted') {
           swReg.periodicSync.register("auto-grade", {
-            minInterval: 24 * 60 * 60 * 1000,
+            minInterval: 5 * 60 * 60 * 1000,
             powerState: 'avoid-draining',
             networkState: 'avoid-cellular'
           }).then(console.log)
