@@ -8,10 +8,11 @@ import ModalProvider from "./context/modal.provider";
 import SetUp from "./pages/Setup/SetUp";
 import ServiceWorkerProvider from "./context/serviceworker.provider";
 import WorkerProvider from "./context/socket-worker/worker.context";
+import configs from "./configs.json";
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={configs.basePath}>
       <ServiceWorkerProvider>
         <IndexDBProvider>
           <UserProvider>
