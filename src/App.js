@@ -12,7 +12,7 @@ import configs from "./configs.json";
 
 function App() {
   return (
-    <BrowserRouter basename={configs.basePath}>
+    <BrowserRouter>
       <ServiceWorkerProvider>
         <IndexDBProvider>
           <UserProvider>
