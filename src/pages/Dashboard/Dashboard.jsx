@@ -76,7 +76,7 @@ export default function Dashboard() {
             });
         }
 
-    }, [user, courses]);
+    }, [user, courses, course]);
 
     useEffect(() => {
         if (workerMessage) {
@@ -120,30 +120,45 @@ export default function Dashboard() {
                     break;
 
                 case "connect":
-                    if(!serviceStatus || serviceStatus === ""){
+                    if (!serviceStatus || serviceStatus === "") {
                         api.post(`/users/auth`, JSON.stringify({ authtoken: user.token }));
                     }
-                break;
+                    break;
 
                 case "serviceState":
                     setServiceStatus(workerMessage.status);
-                    if (assignments2Grade.length > 0) {
-                        worker.postMessage({
-                            action: "send",
-                            as: "grade",
-                            payload: {
-                                usercourse: `${user.id}-any`,
-                                payload: {
-                                    action: "run",
-                                    course: course.id,
-                                    user: user.id,
-                                    assignments: [...assignments2Grade.map(a => a.id)]
-                                }
-                            }
-                        });
+                    Idb.getAll("assignments").then(theAssignments => {
+                        if(theAssignments.length === 0) return;
+                        setAssignments(theAssignments);
 
-                        setAssignments2Grade([]);
-                    }
+                        const scheduledAssignemnts = theAssignments.reduce((a, b) => {
+                            if (b.isGraded) return a;
+                            const { course_id } = b;
+                            if (course_id && !a[course_id]) a[course_id] = [];
+                            a[course_id].push(b.id);
+                            return a;
+                        }, {});
+
+                        if (Object.keys(scheduledAssignemnts).length > 0) {
+                            Object.keys(scheduledAssignemnts).map(course_id => {
+                                worker.postMessage({
+                                    action: "send",
+                                    as: "grade",
+                                    payload: {
+                                        usercourse: `${user.id}-any`,
+                                        payload: {
+                                            action: "run",
+                                            course: course_id,
+                                            user: user.id,
+                                            assignments: scheduledAssignemnts[course_id]
+                                        }
+                                    }
+                                });
+                            });
+                        }
+
+                    });
+
                     break;
             }
         }
@@ -191,22 +206,7 @@ export default function Dashboard() {
                 console.log(e);
                 return;
             }
-
             return;
-
-            /* const getStatus = ()=>serviceStatus;
-
-            await new Promise((rs)=>{ 
-                let interval = setInterval(()=>{
-                    console.log(getStatus());
-                    if(getStatus() && getStatus() !== ""){
-                        clearInterval(interval);
-                        interval = undefined;
-                        rs("done");
-                    }
-                }, 1000);
-            });
-            console.log(worker); */
         }
 
         worker.postMessage({
@@ -355,10 +355,10 @@ export default function Dashboard() {
                                 }}>Student Progress</button>
                             </div>
                         </div>
-                    </Submissions></> 
+                    </Submissions></>
                     : <div className="d-flex flex-column justify-content-center h-100 align-items-center">
                         <h3>Select a course or add one</h3>
-                        </div>}
+                    </div>}
             </div>
         </div>
     </section >)
